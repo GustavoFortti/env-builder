@@ -40,11 +40,11 @@ configure_repository() {
         choice=`echo $i | cut -f 2 -d "="`
         case $option in
             "branch")
-                    branch=$choice
-                    ;;
+                branch=$choice
+                ;;
             "repository")
-                    repository=$choice
-                    ;;
+                repository=$choice
+                ;;
         esac
     done
 
