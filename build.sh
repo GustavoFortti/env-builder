@@ -9,7 +9,7 @@ usage() {
     echo "    build - prepares to build an execution environment"
     echo ""
     echo "SYNOPSIS"
-    echo "    build --set-entrypoint|-S [ARG] [OPTION]..."
+    echo "    build --set-entrypoint [ARG] [OPTION]..."
     echo ""
     echo "DESCRIPTION"
     echo ""
@@ -42,7 +42,7 @@ parse_arguments() {
     log info "PARSE ARGUMENTS"
     log info "$@"
 
-    while  [[ $# -gt 0 ]]; do
+    while  [ $# -gt 0 ]; do
         option="$1"
         shift
         case $option in
@@ -89,11 +89,12 @@ build() {
     configure_entrypoint $SET_ENTRYPOINT
     zip -r ./docker/package.zip ./package/*
 
-    # build container
-    log info "LOAD CONTAINER"
+    # build IMAGE
+    log info "LOAD IMAGE"
     docker build ./docker/ -t python-machine
-    log info "BUILD COMPLETE"
+    log info "BUILD IMAGE"
 
+    log info "remove packages"
     rm -r ./package/
     rm ./docker/package.zip
     
@@ -101,12 +102,13 @@ build() {
 }
 
 start() {
-    if [ "$RUN_CONTAINER" = "true" ]; then
+    if [ "$RUN_CONTAINER" = "1" ]; then
+        log info "RUN CONTAINER"
         docker run -it --name test --rm -p 8088:8088 python-machine
     fi
 }
 
-if [ "$1" = "--help" ]; then
+if [ "$1" = "man" ]; then
     usage
 fi
 parse_arguments "$@"
