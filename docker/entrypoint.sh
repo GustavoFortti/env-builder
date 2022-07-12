@@ -12,8 +12,8 @@ configure_package() {
 
     DIR_NAME=$(echo `grep -n 'name' /root/entrypoint.config` | cut -d "=" -f 2)
     dir_project="/package/$DIR_NAME"
+    mkdir -p /root/project/$DIR_NAME
     if [ -d "$dir_project" ]; then
-        mkdir /root/project
         mv $dir_project /root/project
     else
         REPOSITORY=1
@@ -40,21 +40,21 @@ configure_repository() {
         choice=`echo $i | cut -f 2 -d "="`
         case $option in
             "branch")
-                    branch=$choice
-                    ;;
+                branch=$choice
+                ;;
             "repository")
-                    repository=$choice
-                    ;;
+                repository=$choice
+                ;;
         esac
     done
 
-    git clone $repository /root/project
-    ls /root/
-    # git checkout master
+    git clone $repository /root/project/$DIR_NAME
+    if [ $branch != "master" ]; then
+        git -C /root/project/$DIR_NAME checkout $branch
+    fi
 }
 
 start() {
-
     # prepara o pacote gerado pelo build.sh
     configure_package
 
@@ -64,7 +64,6 @@ start() {
         configure_repository
     fi
 
-    echo "Start "
     python3 /root/project/$DIR_NAME/main.py
 }
 

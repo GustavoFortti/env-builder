@@ -1,17 +1,38 @@
 #!/bin/sh
 
+SET_ENTRYPOINT=0
+RUN_CONTAINER=0
+
 usage() {
-    log info "USEGE"
+    echo ""
+    echo "NAME"
+    echo "    build - prepares to build an execution environment"
+    echo ""
+    echo "SYNOPSIS"
+    echo "    build --set-entrypoint [ARG] [OPTION]..."
+    echo ""
+    echo "DESCRIPTION"
+    echo ""
+    echo "    --set-entrypoint, -S"
+    echo "        Defines the initial settings for running the project from the entrypoint.conf file."
+    echo ""
+    echo "    --run-container, -R"
+    echo "        Just control the image or run the contatainer"
+    echo "        build image = 0"
+    echo "        build image and run container = 1"
+    echo ""
+    exit 0
 }
 
 log() {
     message=$1
+    shift
     if [ "$message" = "info" ]; then
-        echo "[INFO]" $(date) " - " $2 >> ./logs/build.log
-        echo "[INFO]" $(date) " - " $2
+        echo "[INFO]" $(date) " - " $@ >> ./logs/build.log
+        echo "[INFO]" $(date) " - " $@
     elif [ "$message" = "error" ]; then
-        echo "[ERROR]" $(date) " - " $2 >> ./logs/build.log
-        echo "[ERROR]" $(date) " - " $2
+        echo "[ERROR]" $(date) " - " $@ >> ./logs/build.log
+        echo "[ERROR]" $(date) " - " $@
     else
         echo "no log"
     fi
@@ -19,15 +40,29 @@ log() {
 
 parse_arguments() {
     log info "PARSE ARGUMENTS"
+    log info "$@"
+
+    while  [ $# -gt 0 ]; do
+        option="$1"
+        shift
+        case $option in
+            "--" ) break 2;;
+            "--set-entrypoint"|"-S")
+                    SET_ENTRYPOINT="$1"
+                    shift;;
+            "--run-container"|"-R")
+                    RUN_CONTAINER="$1"
+                    shift;;
+        esac
+    done
 }
 
 configure_entrypoint() {
-    set=$1
-    log info "build with $set"
+    log info "build with $SET_ENTRYPOINT"
 
     entrypoint_path="./docker/config/entrypoint.config"
 
-    start_line_index=$(expr $(echo `grep -n $set $entrypoint_path` | cut -d ":" -f 1) + 1)
+    start_line_index=$(expr $(echo `grep -n $SET_ENTRYPOINT $entrypoint_path` | cut -d ":" -f 1) + 1)
     file_size=$(stat -c%s "$entrypoint_path")
     file_config=$(echo $(echo `cat $entrypoint_path | sed -n "$start_line_index,$file_size p"`) | cut -d "[" -f 1)
 
@@ -45,23 +80,21 @@ configure_entrypoint() {
 }
 
 build() {
-    set=$1
-
     log info "START BUILD"
 
     mkdir -p ./package/
     # cria uma copia da chave ssh do repositorio
     cp /home/$(whoami)/.ssh/id_rsa ./package/
-
     # defini a configuracao inicias para executar o projeto
-    configure_entrypoint $set
+    configure_entrypoint $SET_ENTRYPOINT
     zip -r ./docker/package.zip ./package/*
 
-    # build container
-    log info "LOAD CONTAINER"
+    # build IMAGE
+    log info "LOAD IMAGE"
     docker build ./docker/ -t python-machine
-    log info "BUILD COMPLETE"
+    log info "BUILD IMAGE"
 
+    log info "remove packages"
     rm -r ./package/
     rm ./docker/package.zip
     
@@ -69,13 +102,15 @@ build() {
 }
 
 start() {
-    run=true
-    if [ "$run" = "true" ]; then
+    if [ "$RUN_CONTAINER" = "1" ]; then
+        log info "RUN CONTAINER"
         docker run -it --name test --rm -p 8088:8088 python-machine
     fi
 }
 
-usage
-parse_arguments
-build $@
-start
+if [ "$1" = "man" ]; then
+    usage
+fi
+parse_arguments "$@"
+build $1
+start $1
