@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-REPOSITORY=0
+DOWNLOAD_REPOSITORY=0
 DIR_NAME=0
 
 configure_package() {
@@ -16,7 +16,7 @@ configure_package() {
     if [ -d "$dir_project" ]; then
         mv $dir_project /root/project
     else
-        REPOSITORY=1
+        DOWNLOAD_REPOSITORY=1
     fi
 
     rm -r /root/package.zip
@@ -34,8 +34,7 @@ configure_ssh() {
 configure_repository() {
     file_config=`cat ./root/entrypoint.config`
 
-    for i in $file_config
-    do
+    for i in $file_config; do
         option=`echo $i | cut -f 1 -d "="`
         choice=`echo $i | cut -f 2 -d "="`
         case $option in
@@ -59,12 +58,12 @@ start() {
     configure_package
 
     # configura para download do repositorio
-    if [ $REPOSITORY = "1" ]; then
+    if [ $DOWNLOAD_REPOSITORY = "1" ]; then
         configure_ssh
         configure_repository
     fi
 
-    python3 /root/project/$DIR_NAME/main.py
+    bash /root/project/$DIR_NAME/launcher.sh
 }
 
 start

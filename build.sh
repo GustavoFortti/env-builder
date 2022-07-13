@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 SET_ENTRYPOINT=0
 RUN_CONTAINER=0
@@ -9,7 +9,7 @@ usage() {
     echo "    build - prepares to build an execution environment"
     echo ""
     echo "SYNOPSIS"
-    echo "    build --set-entrypoint [ARG] [OPTION]..."
+    echo "    build [OPTION]..."
     echo ""
     echo "DESCRIPTION"
     echo ""
@@ -20,6 +20,9 @@ usage() {
     echo "        Just control the image or run the contatainer"
     echo "        build image = 0"
     echo "        build image and run container = 1"
+    echo ""
+    echo "    --del"
+    echo "        delete docker images that REPOSITORY is <none>"
     echo ""
     exit 0
 }
@@ -55,6 +58,28 @@ parse_arguments() {
                     shift;;
         esac
     done
+}
+
+delete_docker_images() {
+    log info "DELETE DOCKER IMAGE"
+
+    image_name=`docker images | awk '{print $1}'`
+    aux=`docker images | awk '{print $3}'`
+    image_id=( $aux )
+
+    index=0
+    images_delete=""
+    for i in $image_name; do
+        if [ "$i" = "<none>" ]; then
+            images_delete="${image_id[$index]} $images_delete"
+        fi
+        index=$(($index + 1))
+    done
+
+    log info "$images_delete"
+    docker rmi -f $images_delete
+
+    exit 0
 }
 
 configure_entrypoint() {
@@ -101,16 +126,18 @@ build() {
     log info "SUCCESS"
 }
 
-start() {
+run() {
     if [ "$RUN_CONTAINER" = "1" ]; then
         log info "RUN CONTAINER"
         docker run -it --name test --rm -p 8088:8088 python-machine
     fi
 }
 
-if [ "$1" = "man" ]; then
+if [ "$1" = "--help" ]; then
     usage
+elif [ "$1" = "--del" ]; then
+    delete_docker_images
 fi
 parse_arguments "$@"
 build $1
-start $1
+run $1
