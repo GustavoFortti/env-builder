@@ -15,6 +15,5 @@ RUN pip3 install snscrape
 RUN mkdir -p /root/.ssh/
 COPY ./package.zip /root/
 COPY ./entrypoint.sh /root/
-COPY ./build-env.sh /root/
 
 CMD ["bash", "/root/entrypoint.sh"]

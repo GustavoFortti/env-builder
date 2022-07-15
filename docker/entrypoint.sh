@@ -8,9 +8,9 @@ configure_package() {
     sleep 3
 
     mv /package/id_rsa /root/.ssh/
-    mv /package/entrypoint.config /root/
+    mv /package/entrypoint.cfg /root/
 
-    DIR_NAME=$(echo `grep -n 'name' /root/entrypoint.config` | cut -d "=" -f 2)
+    DIR_NAME=$(echo `grep -n 'name' /root/entrypoint.cfg` | cut -d "=" -f 2)
     dir_project="/package/$DIR_NAME"
     mkdir -p /root/project/$DIR_NAME
     if [ -d "$dir_project" ]; then
@@ -32,7 +32,7 @@ configure_ssh() {
 }
 
 configure_repository() {
-    file_config=`cat ./root/entrypoint.config`
+    file_config=`cat ./root/entrypoint.cfg`
 
     for i in $file_config; do
         option=`echo $i | cut -f 1 -d "="`
@@ -63,7 +63,7 @@ start() {
         configure_repository
     fi
 
-    bash /root/project/$DIR_NAME/launcher.sh
+    bash /root/project/$DIR_NAME/launcher.sh --job_name twitter
 }
 
 start

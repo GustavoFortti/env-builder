@@ -1,7 +1,9 @@
 #!/bin/bash
 
-SET_ENTRYPOINT=0
+SET_ENTRYPOINT=""
 RUN_CONTAINER=0
+DIR_NAME=""
+CONTAINER_PARMS=""
 
 usage() {
     echo ""
@@ -18,8 +20,7 @@ usage() {
     echo ""
     echo "    --run-container, -R"
     echo "        Just control the image or run the contatainer"
-    echo "        build image = 0"
-    echo "        build image and run container = 1"
+    echo "        run container = 1"
     echo ""
     echo "    --del"
     echo "        delete docker images that REPOSITORY is <none>"
@@ -82,25 +83,26 @@ delete_docker_images() {
     exit 0
 }
 
-configure_entrypoint() {
+configure_environment() {
     log info "build with $SET_ENTRYPOINT"
 
-    entrypoint_path="./docker/config/entrypoint.config"
+    entrypoint_path="./docker/conf/entrypoint.cfg"
 
     start_line_index=$(expr $(echo `grep -n $SET_ENTRYPOINT $entrypoint_path` | cut -d ":" -f 1) + 1)
     file_size=$(stat -c%s "$entrypoint_path")
     file_config=$(echo $(echo `cat $entrypoint_path | sed -n "$start_line_index,$file_size p"`) | cut -d "[" -f 1)
 
-    log info "$file_config"
     # salva as configuracoes escolhidas para ser executadas pelo entrypoint.sh
-    dir_name=$(echo `grep -n 'name' $entrypoint_path` | cut -d "=" -f 2)
-    echo "name=$dir_name" > ./package/entrypoint.config
-    echo $file_config >> ./package/entrypoint.config
+    DIR_NAME=$(echo `grep -n 'name=' $entrypoint_path` | cut -d "=" -f 2)
+    CONTAINER_PARMS=$(echo `grep -n 'container-run=' $entrypoint_path` | cut -d "=" -f 2)
+    echo "name=$DIR_NAME" > ./package/entrypoint.cfg
+    echo $file_config >> ./package/entrypoint.cfg
 
+    log info $(cat ./package/entrypoint.cfg)
     # caso local=true o projeto executado sera o local e nao do repositorio
     if [ -n "$( echo "$file_config" | sed -n '/local=true/p')" ]; then
-        mkdir ./package/$dir_name
-        cp -r ./project/* ./package/$dir_name
+        mkdir ./package/$DIR_NAME
+        cp -r ./project/* ./package/$DIR_NAME
     fi
 }
 
@@ -111,12 +113,12 @@ build() {
     # cria uma copia da chave ssh do repositorio
     cp /home/$(whoami)/.ssh/id_rsa ./package/
     # defini a configuracao inicias para executar o projeto
-    configure_entrypoint $SET_ENTRYPOINT
+    configure_environment $SET_ENTRYPOINT
     zip -r ./docker/package.zip ./package/*
 
     # build IMAGE
     log info "LOAD IMAGE"
-    docker build ./docker/ -t python-machine
+    docker build ./docker/ -t $DIR_NAME
     log info "BUILD IMAGE"
 
     log info "remove packages"
@@ -129,7 +131,7 @@ build() {
 run() {
     if [ "$RUN_CONTAINER" = "1" ]; then
         log info "RUN CONTAINER"
-        docker run -it --name test --rm -p 8088:8088 python-machine
+        docker run $CONTAINER_PARMS $DIR_NAME
     fi
 }
 
