@@ -25,6 +25,9 @@ usage() {
     echo "    --del"
     echo "        delete docker images that REPOSITORY is <none>"
     echo ""
+    echo "    --init"
+    echo "        creates folder and file structure at project start"
+    echo ""
     exit 0
 }
 
@@ -135,10 +138,21 @@ run() {
     fi
 }
 
+init() {
+    mkdir ./logs
+    mkdir -p ./project/src/utils
+    mkdir ./project/conf/
+    touch ./project/main.py
+
+    exit 0
+}
+
 if [ "$1" = "--help" ]; then
     usage
 elif [ "$1" = "--del" ]; then
     delete_docker_images
+elif [ "$1" = "--init" ]; then
+    init
 fi
 parse_arguments "$@"
 build $1
