@@ -17,7 +17,11 @@ delete_env_images() {
     done
 
     log info "$images_delete"
-    docker rmi -f $images_delete
+    if [ "$images_delete" != "" ]; then
+        docker rmi -f $images_delete
+    else
+        echo "no image was found"
+    fi
 
     exit 0
 }

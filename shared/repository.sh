@@ -21,13 +21,12 @@ commit() {
     read -p "write message to commit: " message
     git commit -m "$message" ./project
 
-    read -p "push? (y/n): " push
-    if [ $push = "n" ]; then
-        exit 0
+    read -p "push? (y): " push
+    if [ $push = "y" ]; then
+        read -p "branch to commit: " branch_commit
+        git push origin $branch_commit ./project
     fi
     
-    read -p "branch to commit: " branch_commit
-    git push origin $branch_commit ./project
 
     exit 0
 }

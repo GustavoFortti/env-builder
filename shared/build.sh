@@ -14,6 +14,7 @@ init() {
     touch ./docker/Dockerfile
     touch ./docker/conf/entrypoint.cfg
     touch ./project/main.py
+    touch ./project/.gitignore
 
     cp ./docker/Dockerfile ./project/.env/docker
     cp ./docker/conf/entrypoint.cfg ./project/.env/docker/conf
