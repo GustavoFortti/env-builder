@@ -10,21 +10,21 @@ commit() {
     # copia os arquivos de ambinte para quee seja salvo no repositorio
     save_env_files
 
-    git status ./project
+    git -C ./project status
     read -p "ok? (y/n): " alter
     if [ $alter = "n" ]; then
         exit 0
     fi
 
-    git add .
+    git -C ./project add .
 
     read -p "write message to commit: " message
-    git commit -m "$message" ./project
+    git -C ./project commit -m "$message"
 
     read -p "push? (y): " push
     if [ $push = "y" ]; then
         read -p "branch to commit: " branch_commit
-        git push origin $branch_commit ./project
+        git -C ./project push origin $branch_commit
     fi
     
 
