@@ -62,8 +62,6 @@ start() {
         configure_ssh
         configure_repository
     fi
-
-    bash /root/project/$DIR_NAME/launcher.sh --job_name twitter
 }
 
 start
