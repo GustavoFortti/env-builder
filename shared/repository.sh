@@ -38,6 +38,5 @@ commit() {
         git -C ./project push origin $branch_commit
     fi
     
-
     exit 0
 }

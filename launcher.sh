@@ -25,7 +25,7 @@ usage() {
     echo ""
     echo "  SUPORT FUNCTIONS"
     echo ""
-    echo "    --delete-images"
+    echo "    --delete-images, -D"
     echo "        delete docker images that REPOSITORY is <none>"
     echo ""
     echo "    --init"

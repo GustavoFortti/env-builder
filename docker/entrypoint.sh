@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DOWNLOAD_REPOSITORY=0
-DIR_NAME=0
+DIR_NAME=""
 
 configure_package() {
     unzip /root/package.zip
@@ -10,7 +10,7 @@ configure_package() {
     mv /package/id_rsa /root/.ssh/
     mv /package/entrypoint.cfg /root/
 
-    DIR_NAME=$(echo `grep -n 'name' /root/entrypoint.cfg` | cut -d "=" -f 2)
+    DIR_NAME=$(echo `grep -n 'name=' /root/entrypoint.cfg` | cut -d "=" -f 2)
     dir_project="/package/$DIR_NAME"
     mkdir -p /root/project/$DIR_NAME
     if [ -d "$dir_project" ]; then
@@ -46,8 +46,9 @@ configure_repository() {
                 ;;
         esac
     done
-
-    git clone $repository /root/project/$DIR_NAME
+    
+    echo "git -C /root/project/$DIR_NAME clone $repository"
+    git -C /root/project/$DIR_NAME clone $repository
     if [ $branch != "master" ]; then
         git -C /root/project/$DIR_NAME checkout $branch
     fi

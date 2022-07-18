@@ -14,7 +14,7 @@ init() {
     touch ./docker/Dockerfile
     touch ./docker/conf/entrypoint.cfg
 
-    setup_entrypoint
+    create_entrypoint
 
     touch ./project/main.py
     touch ./project/.gitignore
@@ -26,7 +26,7 @@ init() {
     exit 0
 }
 
-setup_entrypoint() {
+create_entrypoint() {
     read -p "project name: " project_name
     read -p "repository: " repository_address
 
@@ -60,6 +60,7 @@ setup_environment() {
         mkdir ./package/$DIR_NAME
         cp -r ./project/* ./package/$DIR_NAME
     fi
+
 }
 
 build() {
