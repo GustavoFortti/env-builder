@@ -13,8 +13,6 @@ first_commit() {
         git -C ./project remote add origin $repository_address
         git -C ./project push -u origin master
     fi
-
-    exit 0
 }
 
 commit() {
