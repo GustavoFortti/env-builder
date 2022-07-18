@@ -1,8 +1,7 @@
 #!/bin/bash
 
 source ./shared/logs.sh
-source ./shared/build.sh
-source ./shared/env.sh
+source ./shared/environment.sh
 source ./shared/repository.sh
 
 usage() {
@@ -26,7 +25,7 @@ usage() {
     echo ""
     echo "  SUPORT FUNCTIONS"
     echo ""
-    echo "    --del"
+    echo "    --delete-images"
     echo "        delete docker images that REPOSITORY is <none>"
     echo ""
     echo "    --init"
@@ -34,6 +33,9 @@ usage() {
     echo ""
     echo "    --commit"
     echo "       copy the environment files to the project and send the code to the repository"
+    echo ""
+    echo "    --delete-project"
+    echo "       delete ./project ./docker/Dockerfile ./docker/conf/entrypoint.cfg"
     echo ""
     exit 0
 }
@@ -66,8 +68,11 @@ case $arg in
     "--init")
             init
             shift;;
-    "--del")
+    "--delete-images"| "-D")
             delete_env_images
+            shift;;
+    "--delete-project")
+            delete_project
             shift;;
     "--commit")
             commit

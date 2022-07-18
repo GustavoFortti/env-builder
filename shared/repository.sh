@@ -5,7 +5,22 @@ save_env_files() {
     cp ./docker/conf/entrypoint.cfg ./project/.env/docker/conf
 }
 
+first_commit() {
+    echo $repository
+    if [ ! -d "./project/.git" ]; then
+        exit 0
+        git -C ./project init
+        git -C ./project add .
+        git -C ./project commit -m "create project structure"
+        git -C ./project remote add origin $repository
+        git -C ./project push -u origin master
+    fi
+
+    exit 0
+}
+
 commit() {
+    first_commit
 
     # copia os arquivos de ambinte para quee seja salvo no repositorio
     save_env_files

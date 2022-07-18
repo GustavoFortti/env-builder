@@ -13,16 +13,33 @@ init() {
 
     touch ./docker/Dockerfile
     touch ./docker/conf/entrypoint.cfg
+
+    setup_entrypoint
+
     touch ./project/main.py
     touch ./project/.gitignore
 
     cp ./docker/Dockerfile ./project/.env/docker
     cp ./docker/conf/entrypoint.cfg ./project/.env/docker/conf
 
+    first_commit
     exit 0
 }
 
-configure_environment() {
+setup_entrypoint() {
+    read -p "project name: " project_name
+    read -p "repository: " repository_address
+
+    echo "# environment build settings" >> ./docker/conf/entrypoint.cfg
+    echo "# these settings are changed by parameters in build.sh" >> ./docker/conf/entrypoint.cfg
+    echo "" >> ./docker/conf/entrypoint.cfg
+    echo "# standard project information" >> ./docker/conf/entrypoint.cfg
+    echo "name=$project_name" >> ./docker/conf/entrypoint.cfg
+    echo "repository=$repository_address" >> ./docker/conf/entrypoint.cfg
+
+}
+
+setup_environment() {
     log info "build with $SET_ENTRYPOINT"
 
     entrypoint_path="./docker/conf/entrypoint.cfg"
@@ -52,7 +69,7 @@ build() {
     # cria uma copia da chave ssh do repositorio
     cp /home/$(whoami)/.ssh/id_rsa ./package/
     # defini a configuracao inicias para executar o projeto
-    configure_environment $SET_ENTRYPOINT
+    setup_environment $SET_ENTRYPOINT
     zip -r ./docker/package.zip ./package/*
 
     # build IMAGE
@@ -67,3 +84,44 @@ build() {
     log info "SUCCESS"
 }
 
+run() {
+    if [ "$RUN_CONTAINER" = "1" ]; then
+        log info "RUN CONTAINER"
+        docker run $CONTAINER_PARMS $DIR_NAME
+    fi
+}
+
+delete_env_images() {
+    log info "DELETE DOCKER IMAGE"
+
+    image_name=`docker images | awk '{print $1}'`
+    aux=`docker images | awk '{print $3}'`
+    image_id=( $aux )
+
+    index=0
+    images_delete=""
+    for i in $image_name; do
+        if [ "$i" = "<none>" ]; then
+            images_delete="${image_id[$index]} $images_delete"
+        fi
+        index=$(($index + 1))
+    done
+
+    log info "$images_delete"
+    if [ "$images_delete" != "" ]; then
+        docker rmi -f $images_delete
+    else
+        echo "no image was found"
+    fi
+
+    exit 0
+}
+
+delete_project() {
+    rm -r -f ./project
+    rm -r -f ./logs
+    rm ./docker/Dockerfile
+    rm ./docker/conf/entrypoint.cfg
+
+    exit 0
+}
