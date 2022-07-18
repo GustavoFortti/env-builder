@@ -6,13 +6,11 @@ save_env_files() {
 }
 
 first_commit() {
-    echo $repository
     if [ ! -d "./project/.git" ]; then
-        exit 0
         git -C ./project init
         git -C ./project add .
         git -C ./project commit -m "create project structure"
-        git -C ./project remote add origin $repository
+        git -C ./project remote add origin $repository_address
         git -C ./project push -u origin master
     fi
 
