@@ -1,6 +1,7 @@
 /project/
 /logs/
 /notebook/
-/docker/Dockerfile
 
+/docker/Dockerfile
+/docker/setup-env.sh
 /docker/conf/entrypoint.cfg

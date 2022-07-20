@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source ./shared/logs.sh
-source ./shared/environment.sh
+source ./shared/env.sh
 source ./shared/repository.sh
 
 usage() {

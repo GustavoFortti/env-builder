@@ -12,6 +12,10 @@ init() {
     mkdir -p ./project/.env/docker/conf
 
     touch ./docker/Dockerfile
+    touch ./docker/setup-env.sh
+    echo "#!/bin/bash" >> setup-env.sh
+    echo "# specific command for building the environment" >> setup-env.sh
+
     touch ./docker/conf/entrypoint.cfg
 
     create_entrypoint
@@ -39,7 +43,7 @@ create_entrypoint() {
 
 }
 
-setup_environment() {
+setup_entrypoint() {
     log info "build with $SET_ENTRYPOINT"
 
     entrypoint_path="./docker/conf/entrypoint.cfg"
@@ -70,7 +74,7 @@ build() {
     # cria uma copia da chave ssh do repositorio
     cp /home/$(whoami)/.ssh/id_rsa ./package/
     # defini a configuracao inicias para executar o projeto
-    setup_environment $SET_ENTRYPOINT
+    setup_entrypoint $SET_ENTRYPOINT
     zip -r ./docker/package.zip ./package/*
 
     # build IMAGE

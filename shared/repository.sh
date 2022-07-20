@@ -2,6 +2,7 @@
 
 save_env_files() {
     cp ./docker/Dockerfile ./project/.env/docker
+    cp ./docker/setup-env.sh ./project/.env/docker
     cp ./docker/conf/entrypoint.cfg ./project/.env/docker/conf
 }
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /root/setup-env.sh
+
 DOWNLOAD_REPOSITORY=0
 DIR_NAME=""
 
@@ -63,6 +65,9 @@ start() {
         configure_ssh
         configure_repository
     fi
+
+    # Executes environment-specific functionality
+    setup_env
 }
 
 start
