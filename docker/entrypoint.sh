@@ -67,8 +67,12 @@ start() {
     fi
 
     # Executes environment-specific functionality
-    echo "ok"
-    # setup_env
+    setup_env
+
+    CONTAINER_RUNNING=$(echo `grep -n 'container-running=' /root/entrypoint.cfg` | cut -d "=" -f 2)
+    if [ $CONTAINER_RUNNING = true ]; then
+        tail -f /dev/null
+    fi
 }
 
 start

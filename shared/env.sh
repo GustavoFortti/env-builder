@@ -4,6 +4,7 @@ SET_ENTRYPOINT=""
 RUN_CONTAINER=0
 DIR_NAME=""
 CONTAINER_PARMS=""
+ENTRYPOINT_PATH="./docker/conf/entrypoint.cfg"
 
 init() {
     mkdir ./logs
@@ -12,11 +13,14 @@ init() {
     mkdir -p ./project/.env/docker/conf
 
     touch ./docker/Dockerfile
-    touch ./docker/setup-env.sh
-    echo "#!/bin/bash" >> setup-env.sh
-    echo "# specific command for building the environment" >> setup-env.sh
+    setup_env_path="./docker/setup-env.sh"
 
-    touch ./docker/conf/entrypoint.cfg
+    touch $setup_env_path
+    echo "#!/bin/bash" >> $setup_env_path
+    echo "# specific command for building the environment" >> $setup_env_path
+    echo "setup_env() {}" >> $setup_env_path
+
+    touch $ENTRYPOINT_PATH
 
     create_entrypoint
 
@@ -24,7 +28,7 @@ init() {
     touch ./project/.gitignore
 
     cp ./docker/Dockerfile ./project/.env/docker
-    cp ./docker/conf/entrypoint.cfg ./project/.env/docker/conf
+    cp $ENTRYPOINT_PATH ./project/.env/docker/conf$ENTRYPOINT_PATH
 
     first_commit
     exit 0
@@ -34,38 +38,37 @@ create_entrypoint() {
     read -p "project name: " project_name
     read -p "repository: " repository_address
 
-    echo "# environment build settings" >> ./docker/conf/entrypoint.cfg
-    echo "# these settings are changed by parameters in build.sh" >> ./docker/conf/entrypoint.cfg
-    echo "" >> ./docker/conf/entrypoint.cfg
-    echo "# standard project information" >> ./docker/conf/entrypoint.cfg
-    echo "name=$project_name" >> ./docker/conf/entrypoint.cfg
-    echo "repository=$repository_address" >> ./docker/conf/entrypoint.cfg
+    echo "# environment build settings" >> $ENTRYPOINT_PATH
+    echo "# these settings are changed by parameters in build.sh" >> $ENTRYPOINT_PATH
+    echo "" >> $ENTRYPOINT_PATH
+    echo "# standard project information" >> $ENTRYPOINT_PATH
+    echo "name=$project_name" >> $ENTRYPOINT_PATH
+    echo "repository=$repository_address" >> $ENTRYPOINT_PATH
 
 }
 
 setup_entrypoint() {
     log info "build with $SET_ENTRYPOINT"
 
-    entrypoint_path="./docker/conf/entrypoint.cfg"
     package_entrypoint_path="./package/entrypoint.cfg"
 
     # salva as configuracoes escolhidas para ser executadas pelo entrypoint.sh
-    DIR_NAME=$(echo `grep -n 'project-name=' $entrypoint_path` | cut -d "=" -f 2)
-    REPOSITORY=$(echo `grep 'repository=' $entrypoint_path`)
+    DIR_NAME=$(echo `grep -n 'project-name=' $ENTRYPOINT_PATH` | cut -d "=" -f 2)
+    REPOSITORY=$(echo `grep 'repository=' $ENTRYPOINT_PATH`)
     echo "project-name=$DIR_NAME" > $package_entrypoint_path
     echo $REPOSITORY >> $package_entrypoint_path
 
-    # busca pela primeira e ultima linha que contem a definição da configuração
+    # busca pela primeira e ultima linha da configuração escolhida
     count=0
-    set_index=(`grep -n "\[" $entrypoint_path`)
+    set_index=(`grep -n "\[" $ENTRYPOINT_PATH`)
     for i in ${set_index[@]}; do
         IFS=: read -r index value <<< $i
         if [ "$value" = "[$SET_ENTRYPOINT]" ]; then
-            start_line_config=$index
+            start_line_config=$(expr $index + 1)
             end_index=$(expr $count + 1)
             aux_end_line_config=`echo ${set_index[end_index]} | cut -d ":" -f 1`
             if [ "$aux_end_line_config" = "" ]; then
-                end_line_config=$(expr `cat $entrypoint_path | wc -l` + 1)
+                end_line_config=$(expr `cat $ENTRYPOINT_PATH | wc -l` + 1)
             else
                 end_line_config=$(expr $aux_end_line_config - 1)
             fi
@@ -74,8 +77,8 @@ setup_entrypoint() {
         fi
         count=$(expr $count + 1)
     done
-    cat $entrypoint_path | sed -n "${start_line_config},${end_line_config}p" >> $package_entrypoint_path
-    
+    cat $ENTRYPOINT_PATH | sed -n "${start_line_config},${end_line_config}p" >> $package_entrypoint_path
+
     CONTAINER_PARMS=$(echo `grep -n 'container-run=' $package_entrypoint_path` | cut -d "=" -f 2)
 
     log info $(cat $package_entrypoint_path)
@@ -112,7 +115,7 @@ run() {
     if [ "$RUN_CONTAINER" = "1" ]; then
         log info "RUN CONTAINER"
         log info "docker run $CONTAINER_PARMS $DIR_NAME"
-        docker run $CONTAINER_PARMS $DIR_NAME
+        docker run $CONTAINER_PARMS $DIR_NAME 
     fi
 }
 
@@ -146,7 +149,7 @@ delete_project() {
     rm -r -f ./project
     rm -r -f ./logs
     rm ./docker/Dockerfile
-    rm ./docker/conf/entrypoint.cfg
+    rm $ENTRYPOINT_PATH
 
     exit 0
 }
