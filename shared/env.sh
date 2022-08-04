@@ -47,24 +47,43 @@ setup_entrypoint() {
     log info "build with $SET_ENTRYPOINT"
 
     entrypoint_path="./docker/conf/entrypoint.cfg"
-
-    start_line_index=$(expr $(echo `grep -n $SET_ENTRYPOINT $entrypoint_path` | cut -d ":" -f 1) + 1)
-    file_size=$(stat -c%s "$entrypoint_path")
-    file_config=$(echo $(echo `cat $entrypoint_path | sed -n "$start_line_index,$file_size p"`) | cut -d "[" -f 1)
+    package_entrypoint_path="./package/entrypoint.cfg"
 
     # salva as configuracoes escolhidas para ser executadas pelo entrypoint.sh
-    DIR_NAME=$(echo `grep -n 'name=' $entrypoint_path` | cut -d "=" -f 2)
-    CONTAINER_PARMS=$(echo `grep -n 'container-run=' $entrypoint_path` | cut -d "=" -f 2)
-    echo "name=$DIR_NAME" > ./package/entrypoint.cfg
-    echo $file_config >> ./package/entrypoint.cfg
+    DIR_NAME=$(echo `grep -n 'project-name=' $entrypoint_path` | cut -d "=" -f 2)
+    REPOSITORY=$(echo `grep 'repository=' $entrypoint_path`)
+    echo "project-name=$DIR_NAME" > $package_entrypoint_path
+    echo $REPOSITORY >> $package_entrypoint_path
 
-    log info $(cat ./package/entrypoint.cfg)
+    # busca pela primeira e ultima linha que contem a definição da configuração
+    count=0
+    set_index=(`grep -n "\[" $entrypoint_path`)
+    for i in ${set_index[@]}; do
+        IFS=: read -r index value <<< $i
+        if [ "$value" = "[$SET_ENTRYPOINT]" ]; then
+            start_line_config=$index
+            end_index=$(expr $count + 1)
+            aux_end_line_config=`echo ${set_index[end_index]} | cut -d ":" -f 1`
+            if [ "$aux_end_line_config" = "" ]; then
+                end_line_config=$(expr `cat $entrypoint_path | wc -l` + 1)
+            else
+                end_line_config=$(expr $aux_end_line_config - 1)
+            fi
+
+            break
+        fi
+        count=$(expr $count + 1)
+    done
+    cat $entrypoint_path | sed -n "${start_line_config},${end_line_config}p" >> $package_entrypoint_path
+    
+    CONTAINER_PARMS=$(echo `grep -n 'container-run=' $package_entrypoint_path` | cut -d "=" -f 2)
+
+    log info $(cat $package_entrypoint_path)
     # caso local=true o projeto executado sera o local e nao do repositorio
-    if [ -n "$( echo "$file_config" | sed -n '/local=true/p')" ]; then
+    if [ -n "$( cat "$package_entrypoint_path" | sed -n '/local=true/p')" ]; then
         mkdir ./package/$DIR_NAME
         cp -r ./project/* ./package/$DIR_NAME
     fi
-
 }
 
 build() {
@@ -92,6 +111,7 @@ build() {
 run() {
     if [ "$RUN_CONTAINER" = "1" ]; then
         log info "RUN CONTAINER"
+        log info "docker run $CONTAINER_PARMS $DIR_NAME"
         docker run $CONTAINER_PARMS $DIR_NAME
     fi
 }

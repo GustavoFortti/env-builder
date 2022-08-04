@@ -12,7 +12,7 @@ configure_package() {
     mv /package/id_rsa /root/.ssh/
     mv /package/entrypoint.cfg /root/
 
-    DIR_NAME=$(echo `grep -n 'name=' /root/entrypoint.cfg` | cut -d "=" -f 2)
+    DIR_NAME=$(echo `grep -n 'project-name=' /root/entrypoint.cfg` | cut -d "=" -f 2)
     dir_project="/package/$DIR_NAME"
     mkdir -p /root/project/$DIR_NAME
     if [ -d "$dir_project" ]; then
@@ -67,7 +67,8 @@ start() {
     fi
 
     # Executes environment-specific functionality
-    setup_env
+    echo "ok"
+    # setup_env
 }
 
 start
