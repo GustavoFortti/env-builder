@@ -99,16 +99,27 @@ build() {
     setup_entrypoint $SET_ENTRYPOINT
     zip -r ./docker/package.zip ./package/*
 
-    # build IMAGE
-    log info "LOAD IMAGE"
-    docker build ./docker/ -t $DIR_NAME
-    log info "BUILD IMAGE"
+    build_image=$(echo `grep -n 'build=' $package_entrypoint_path` | cut -d "=" -f 2)
+    flag=false
+    if [ $build_image = "false" ]; then
+        # send code to server
+        log info "SENDING..."
+        flag=true
+    else
+        # build IMAGE
+        log info "LOAD IMAGE"
+        docker build ./docker/ -t $DIR_NAME
+        log info "BUILD IMAGE"
+    fi
 
     log info "remove packages"
     rm -r ./package/
     rm ./docker/package.zip
     
     log info "SUCCESS"
+    if [ $flag = true ]; then
+        exit 0
+    fi
 }
 
 run() {
@@ -152,4 +163,9 @@ delete_project() {
     rm $ENTRYPOINT_PATH
 
     exit 0
+}
+
+start() {
+    build
+    run
 }

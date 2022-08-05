@@ -80,5 +80,4 @@ case $arg in
 esac
 
 parse_arguments "$@"
-build $1
-run $1
+start
