@@ -2,7 +2,9 @@
 
 SET_ENTRYPOINT=""
 RUN_CONTAINER=0
-DIR_NAME=""
+PROJECT_NAME=""
+PROJECT_PATH="/home/"
+CONTAINER_NAME=""
 CONTAINER_PARMS=""
 ENTRYPOINT_PATH="./docker/conf/entrypoint.cfg"
 
@@ -18,7 +20,7 @@ init() {
     touch $setup_env_path
     echo "#!/bin/bash" >> $setup_env_path
     echo "# specific command for building the environment" >> $setup_env_path
-    echo "setup_env() {}" >> $setup_env_path
+    echo "# setup_env() {}" >> $setup_env_path
 
     touch $ENTRYPOINT_PATH
 
@@ -53,9 +55,10 @@ setup_entrypoint() {
     package_entrypoint_path="./package/entrypoint.cfg"
 
     # salva as configuracoes escolhidas para ser executadas pelo entrypoint.sh
-    DIR_NAME=$(echo `grep -n 'project-name=' $ENTRYPOINT_PATH` | cut -d "=" -f 2)
+    PROJECT_NAME=$(echo `grep -n 'project-name=' $ENTRYPOINT_PATH` | cut -d "=" -f 2)
     REPOSITORY=$(echo `grep 'repository=' $ENTRYPOINT_PATH`)
-    echo "project-name=$DIR_NAME" > $package_entrypoint_path
+    CONTAINER_NAME=$(echo `grep 'container-name=' $ENTRYPOINT_PATH` | cut -d "=" -f 2)
+    echo "project-name=$PROJECT_NAME" > $package_entrypoint_path
     echo $REPOSITORY >> $package_entrypoint_path
 
     # busca pela primeira e ultima linha da configuração escolhida
@@ -80,12 +83,12 @@ setup_entrypoint() {
     cat $ENTRYPOINT_PATH | sed -n "${start_line_config},${end_line_config}p" >> $package_entrypoint_path
 
     CONTAINER_PARMS=$(echo `grep -n 'container-run=' $package_entrypoint_path` | cut -d "=" -f 2)
-
+    
     log info $(cat $package_entrypoint_path)
     # caso local=true o projeto executado sera o local e nao do repositorio
     if [ -n "$( cat "$package_entrypoint_path" | sed -n '/local=true/p')" ]; then
-        mkdir ./package/$DIR_NAME
-        cp -r ./project/* ./package/$DIR_NAME
+        mkdir ./package/$PROJECT_NAME
+        cp -r ./project/* ./package/$PROJECT_NAME
     fi
 }
 
@@ -101,14 +104,20 @@ build() {
 
     build_image=$(echo `grep -n 'build=' $package_entrypoint_path` | cut -d "=" -f 2)
     flag=false
-    if [ $build_image = "false" ]; then
+    container_running=$(echo ` docker container inspect -f '{{.State.Running}}' $CONTAINER_NAME `)
+    if [[ $build_image = "false" && $container_running = "true" ]]; then
         # send code to server
         log info "SENDING..."
+        CONTAINER_DEST_PATH="$PROJECT_PATH$PROJECT_NAME"
+        docker exec -it airflow-server mkdir -p $CONTAINER_DEST_PATH
+        docker cp ./docker/package.zip $CONTAINER_NAME:$CONTAINER_DEST_PATH
+        docker cp ./docker/entrypoint.sh $CONTAINER_NAME:$CONTAINER_DEST_PATH
+        docker cp ./docker/setup-env.sh $CONTAINER_NAME:$CONTAINER_DEST_PATH
         flag=true
     else
         # build IMAGE
         log info "LOAD IMAGE"
-        docker build ./docker/ -t $DIR_NAME
+        docker build ./docker/ -t $PROJECT_NAME
         log info "BUILD IMAGE"
     fi
 
@@ -125,8 +134,8 @@ build() {
 run() {
     if [ "$RUN_CONTAINER" = "1" ]; then
         log info "RUN CONTAINER"
-        log info "docker run $CONTAINER_PARMS $DIR_NAME"
-        docker run $CONTAINER_PARMS $DIR_NAME 
+        log info "docker run $CONTAINER_PARMS $PROJECT_NAME"
+        docker run $CONTAINER_PARMS $PROJECT_NAME 
     fi
 }
 

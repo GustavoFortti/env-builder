@@ -1,32 +1,35 @@
 #!/bin/bash
 
-source /root/setup-env.sh
-
+PROJECT_NAME=""
+PROJECT_PATH=$1
 DOWNLOAD_REPOSITORY=0
-DIR_NAME=""
+
+source $PROJECT_PATH/setup-env.sh
 
 configure_package() {
-    unzip /root/package.zip
+    unzip $PROJECT_PATH/package.zip -d $PROJECT_PATH
+    ls $PROJECT_PATH
+    exit 0
     sleep 3
 
     mv /package/id_rsa /root/.ssh/
-    mv /package/entrypoint.cfg /root/
+    mv /package/entrypoint.cfg $PROJECT_PATH/
 
-    DIR_NAME=$(echo `grep -n 'project-name=' /root/entrypoint.cfg` | cut -d "=" -f 2)
-    dir_project="/package/$DIR_NAME"
-    mkdir -p /root/project/$DIR_NAME
+    PROJECT_NAME=$(echo `grep -n 'project-name=' $PROJECT_PATH/entrypoint.cfg` | cut -d "=" -f 2)
+    dir_project="/package/$PROJECT_NAME"
+    mkdir -p $PROJECT_PATH/project/$PROJECT_NAME
     if [ -d "$dir_project" ]; then
-        mv $dir_project /root/project
+        mv $dir_project $PROJECT_PATH/project
     else
         DOWNLOAD_REPOSITORY=1
     fi
 
-    rm -r /root/package.zip
+    rm $PROJECT_PATH/package.zip
 }
 
 configure_ssh() {
     chmod 600 /root/.ssh/id_rsa
-    chmod 777 /root/entrypoint.sh
+    chmod 777 $PROJECT_PATH/entrypoint.sh
 
     eval $(ssh-agent -s)
     ssh-add /root/.ssh/id_rsa
@@ -34,7 +37,7 @@ configure_ssh() {
 }
 
 configure_repository() {
-    file_config=`cat ./root/entrypoint.cfg`
+    file_config=`cat .$PROJECT_PATH/entrypoint.cfg`
 
     for i in $file_config; do
         option=`echo $i | cut -f 1 -d "="`
@@ -49,10 +52,10 @@ configure_repository() {
         esac
     done
     
-    echo "git -C /root/project/$DIR_NAME clone $repository"
-    git -C /root/project/$DIR_NAME clone $repository
+    echo "git -C $PROJECT_PATH/project/$PROJECT_NAME clone $repository"
+    git -C $PROJECT_PATH/project/$PROJECT_NAME clone $repository
     if [ $branch != "master" ]; then
-        git -C /root/project/$DIR_NAME checkout $branch
+        git -C $PROJECT_PATH/project/$PROJECT_NAME checkout $branch
     fi
 }
 
@@ -69,8 +72,8 @@ start() {
     # Executes environment-specific functionality
     setup_env
 
-    CONTAINER_RUNNING=$(echo `grep -n 'container-running=' /root/entrypoint.cfg` | cut -d "=" -f 2)
-    if [ $CONTAINER_RUNNING = true ]; then
+    keep_running_container=$(echo `grep -n 'container-running=' $PROJECT_PATH/entrypoint.cfg` | cut -d "=" -f 2)
+    if [ $keep_running_container = true ]; then
         tail -f /dev/null
     fi
 }
