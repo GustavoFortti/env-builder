@@ -3,24 +3,20 @@
 PROJECT_NAME=""
 PROJECT_PATH=$1
 DOWNLOAD_REPOSITORY=0
+DIR_PROJECT=""
 
 source $PROJECT_PATH/setup-env.sh
 
 configure_package() {
     unzip $PROJECT_PATH/package.zip -d $PROJECT_PATH
     ls $PROJECT_PATH
-    exit 0
-    sleep 3
 
-    mv /package/id_rsa /root/.ssh/
-    mv /package/entrypoint.cfg $PROJECT_PATH/
+    mv $PROJECT_PATH/package/id_rsa /root/.ssh/
+    mv $PROJECT_PATH/package/entrypoint.cfg $PROJECT_PATH/
 
     PROJECT_NAME=$(echo `grep -n 'project-name=' $PROJECT_PATH/entrypoint.cfg` | cut -d "=" -f 2)
-    dir_project="/package/$PROJECT_NAME"
-    mkdir -p $PROJECT_PATH/project/$PROJECT_NAME
-    if [ -d "$dir_project" ]; then
-        mv $dir_project $PROJECT_PATH/project
-    else
+    DIR_PROJECT="$PROJECT_PATH/package/$PROJECT_NAME"
+    if [ ! -d "$DIR_PROJECT" ]; then
         DOWNLOAD_REPOSITORY=1
     fi
 
@@ -37,7 +33,7 @@ configure_ssh() {
 }
 
 configure_repository() {
-    file_config=`cat .$PROJECT_PATH/entrypoint.cfg`
+    file_config=`cat $PROJECT_PATH/entrypoint.cfg`
 
     for i in $file_config; do
         option=`echo $i | cut -f 1 -d "="`
@@ -52,10 +48,10 @@ configure_repository() {
         esac
     done
     
-    echo "git -C $PROJECT_PATH/project/$PROJECT_NAME clone $repository"
-    git -C $PROJECT_PATH/project/$PROJECT_NAME clone $repository
+    echo "git -C $DIR_PROJECT clone $repository"
+    git -C $DIR_PROJECT clone $repository
     if [ $branch != "master" ]; then
-        git -C $PROJECT_PATH/project/$PROJECT_NAME checkout $branch
+        git -C $DIR_PROJECT checkout $branch
     fi
 }
 
@@ -73,6 +69,8 @@ start() {
     setup_env
 
     keep_running_container=$(echo `grep -n 'container-running=' $PROJECT_PATH/entrypoint.cfg` | cut -d "=" -f 2)
+    echo $keep_running_container
+    exit 0
     if [ $keep_running_container = true ]; then
         tail -f /dev/null
     fi

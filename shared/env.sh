@@ -3,7 +3,7 @@
 SET_ENTRYPOINT=""
 RUN_CONTAINER=0
 PROJECT_NAME=""
-PROJECT_PATH="/home/"
+PROJECT_PATH=""
 CONTAINER_NAME=""
 CONTAINER_PARMS=""
 ENTRYPOINT_PATH="./docker/conf/entrypoint.cfg"
@@ -56,6 +56,7 @@ setup_entrypoint() {
 
     # salva as configuracoes escolhidas para ser executadas pelo entrypoint.sh
     PROJECT_NAME=$(echo `grep -n 'project-name=' $ENTRYPOINT_PATH` | cut -d "=" -f 2)
+    PROJECT_PATH=$(echo `grep 'project-path=' $ENTRYPOINT_PATH` | cut -d "=" -f 2)
     REPOSITORY=$(echo `grep 'repository=' $ENTRYPOINT_PATH`)
     CONTAINER_NAME=$(echo `grep 'container-name=' $ENTRYPOINT_PATH` | cut -d "=" -f 2)
     echo "project-name=$PROJECT_NAME" > $package_entrypoint_path
