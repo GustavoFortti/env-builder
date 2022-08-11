@@ -7,6 +7,7 @@ PROJECT_PATH=""
 CONTAINER_NAME=""
 CONTAINER_PARMS=""
 ENTRYPOINT_PATH="./docker/conf/entrypoint.cfg"
+SETUP_ENV_PATH="./docker/setup-env.sh"
 
 init() {
     mkdir ./logs
@@ -15,12 +16,11 @@ init() {
     mkdir -p ./project/.env/docker/conf
 
     touch ./docker/Dockerfile
-    setup_env_path="./docker/setup-env.sh"
 
-    touch $setup_env_path
-    echo "#!/bin/bash" >> $setup_env_path
-    echo "# specific command for building the environment" >> $setup_env_path
-    echo "# setup_env() {}" >> $setup_env_path
+    touch $SETUP_ENV_PATH
+    echo "#!/bin/bash" >> $SETUP_ENV_PATH
+    echo "# specific command for building the environment" >> $SETUP_ENV_PATH
+    echo "# setup_env() {}" >> $SETUP_ENV_PATH
 
     touch $ENTRYPOINT_PATH
 
@@ -30,7 +30,7 @@ init() {
     touch ./project/.gitignore
 
     cp ./docker/Dockerfile ./project/.env/docker
-    cp $ENTRYPOINT_PATH ./project/.env/docker/conf$ENTRYPOINT_PATH
+    cp $ENTRYPOINT_PATH ./project/.env${ENTRYPOINT_PATH:1}
 
     first_commit
     exit 0
@@ -171,6 +171,7 @@ delete_project() {
     rm -r -f ./logs
     rm ./docker/Dockerfile
     rm $ENTRYPOINT_PATH
+    rm $SETUP_ENV_PATH
 
     exit 0
 }
